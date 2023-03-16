@@ -1,0 +1,209 @@
+
+/****** Data Cleaning in SQL Server  ******/
+
+SELECT *
+FROM PortfolioProjects.dbo.FIFA21RAWDATA
+
+
+--Dropping Some Unwanted Columns
+ALTER TABLE PortfolioProjects.dbo.FIFA21RAWDATA
+DROP COLUMN Name,LongName,photoUrl,playerUrl,"Loan Date End", Value,"Release Clause",Hits;
+
+
+--Renaming Name_Cleaned and Hit_cleaned, height,weight,value in pounds, wage in pounds
+
+SP_RENAME 'FIFA21RAWDATA.Name_Cleaned','Name','COLUMN';
+
+SP_RENAME 'FIFA21RAWDATA.Hits_cleaned','Hits','COLUMN';
+
+SP_RENAME 'FIFA21RAWDATA.Height','Height_in_cm','COLUMN';
+
+SP_RENAME 'FIFA21RAWDATA.Weight','Weight_in_lbs','COLUMN';
+
+SP_RENAME 'FIFA21RAWDATA.Value_Cleaned','Value_in_£','COLUMN';
+
+SP_RENAME 'FIFA21RAWDATA.Wage','Wage_in_£','COLUMN';
+
+
+-- Standardizing Date Format for Joined column
+
+SELECT Joined, CONVERT(Date,Joined)
+FROM PortfolioProjects.dbo.FIFA21RAWDATA
+
+UPDATE PortfolioProjects.dbo.FIFA21RAWDATA
+SET Joined = CONVERT(Date,Joined)
+
+--Splitting Contract Column into individual Columns(Contract Start and End)
+
+SELECT Contract
+FROM PortfolioProjects.dbo.FIFA21RAWDATA
+
+
+SELECT
+PARSENAME(REPLACE(Contract, '~', '.') , 2)
+,PARSENAME(REPLACE(Contract, '~', '.') , 1)
+FROM PortfolioProjects.dbo.FIFA21RAWDATA
+
+
+ALTER TABLE PortfolioProjects.dbo.FIFA21RAWDATA
+ADD Contract_Start NVARCHAR(300);
+
+UPDATE PortfolioProjects.dbo.FIFA21RAWDATA
+SET Contract_Start = PARSENAME(REPLACE(Contract, '~', '.') , 2)
+
+
+ALTER TABLE PortfolioProjects.dbo.FIFA21RAWDATA
+ADD Contract_End NVARCHAR(300);
+
+UPDATE PortfolioProjects.dbo.FIFA21RAWDATA
+SET Contract_End = PARSENAME(REPLACE(Contract, '~', '.') , 1)
+
+
+
+-- Replacing Clubs with Special Characters
+
+UPDATE PortfolioProjects.dbo.FIFA21RAWDATA
+SET Club = REPLACE(Club,'AtlÃ©tico Madrid', 'Atletico Madrid')
+WHERE Club LIKE '%AtlÃ©tico Madrid%'
+
+UPDATE PortfolioProjects.dbo.FIFA21RAWDATA
+SET Club = REPLACE(Club,'FC Bayern MÃ¼nchen', 'FC Bayern Munich')
+WHERE Club LIKE '%FC Bayern MÃ¼nchen%'
+
+UPDATE PortfolioProjects.dbo.FIFA21RAWDATA
+SET Club = REPLACE(Club,'Inter', 'Inter Milan')
+WHERE Club LIKE '%Inter%'
+
+UPDATE PortfolioProjects.dbo.FIFA21RAWDATA
+SET Club = REPLACE(Club, 'Ã­', 'í');
+
+UPDATE PortfolioProjects.dbo.FIFA21RAWDATA
+SET Club = REPLACE(Club, 'Ã³', 'ó')
+
+UPDATE PortfolioProjects.dbo.FIFA21RAWDATA 
+SET Club = REPLACE(Club, 'Ã©', 'é');
+
+UPDATE PortfolioProjects.dbo.FIFA21RAWDATA 
+SET Club = REPLACE(Club, 'Ã¼', 'ü');
+
+UPDATE PortfolioProjects.dbo.FIFA21RAWDATA 
+SET Club = REPLACE(Club, 'Ã¸', 'Ø');
+
+UPDATE PortfolioProjects.dbo.FIFA21RAWDATA 
+SET Club = REPLACE(Club, 'Ã¶', 'Ö');
+
+UPDATE PortfolioProjects.dbo.FIFA21RAWDATA 
+SET Club = REPLACE(Club, 'Ã–', 'Ö');
+
+UPDATE PortfolioProjects.dbo.FIFA21RAWDATA
+SET Club = REPLACE(Club, 'Ã¡', 'á')
+
+UPDATE PortfolioProjects.dbo.FIFA21RAWDATA
+SET Club = REPLACE(Club, 'Ã±', 'ñ')
+
+UPDATE PortfolioProjects.dbo.FIFA21RAWDATA
+SET Club = REPLACE(Club, 'Ã¦', 'æ')
+
+UPDATE PortfolioProjects.dbo.FIFA21RAWDATA
+SET Club = REPLACE(Club, 'Å„', 'n')
+
+UPDATE PortfolioProjects.dbo.FIFA21RAWDATA
+SET Club = REPLACE(Club, 'Å‚', 'ł')
+
+UPDATE PortfolioProjects.dbo.FIFA21RAWDATA
+SET Club = REPLACE(Club, 'Ã¥', 'ę')
+
+UPDATE PortfolioProjects.dbo.FIFA21RAWDATA
+SET Club = REPLACE(Club, 'Ã£', 'ã')
+
+UPDATE PortfolioProjects.dbo.FIFA21RAWDATA
+SET Club = REPLACE(Club, 'Ã¢', 'a')
+
+UPDATE PortfolioProjects.dbo.FIFA21RAWDATA
+SET Club = REPLACE(Club, 'ÅŸ', 's')
+
+UPDATE PortfolioProjects.dbo.FIFA21RAWDATA
+SET Club = REPLACE(Club, 'Ä™', 's')
+
+
+--Removing 1. from some clubs name in the club column
+
+UPDATE PortfolioProjects.dbo.FIFA21RAWDATA
+SET Club = REPLACE(Club, '1.', '')
+WHERE Club LIKE '%1.%';
+
+	
+--Changing Weight Column from kg to lbs
+
+SELECT CAST(Weight AS FLOAT) 
+FROM PortfolioProjects.dbo.FIFA21RAWDATA;
+
+UPDATE PortfolioProjects.dbo.FIFA21RAWDATA
+SET Weight = Weight * 2.20462
+
+UPDATE PortfolioProjects.dbo.FIFA21RAWDATA 
+SET Weight = CONVERT(INT, Weight);
+
+--Convertin the height column from float to INT
+UPDATE PortfolioProjects.dbo.FIFA21RAWDATA 
+SET Height = CONVERT(INT, Height);
+
+
+
+--Replacing the "K" from the Wage Column and changing the datatype to int
+
+UPDATE PortfolioProjects.dbo.FIFA21RAWDATA
+SET Wage = REPLACE(Wage, 'K','000')
+WHERE Wage LIKE '%K%';
+
+UPDATE PortfolioProjects.dbo.FIFA21RAWDATA
+SET Wage  = REPLACE(Wage, '.00', '')
+WHERE Wage LIKE '%.00%';
+
+UPDATE PortfolioProjects.dbo.FIFA21RAWDATA 
+SET Wage = CONVERT(INT, Wage);
+
+
+SELECT *
+FROM PortfolioProjects.dbo.FIFA21RAWDATA
+--Removing the Star character from columns W/F,SM and IR and changing their datatype
+
+UPDATE PortfolioProjects.dbo.FIFA21RAWDATA
+SET [W/F] = REPLACE([W/F], N'★', '')
+WHERE CHARINDEX(N'★',[W/F])>0; 
+
+ALTER TABLE PortfolioProjects.dbo.FIFA21RAWDATA
+ALTER COLUMN [W/F] INT
+
+
+UPDATE PortfolioProjects.dbo.FIFA21RAWDATA
+SET SM = REPLACE(SM, N'★', '')
+WHERE CHARINDEX(N'★',SM)>0; 
+
+ALTER TABLE PortfolioProjects.dbo.FIFA21RAWDATA
+ALTER COLUMN SM INT
+
+
+UPDATE PortfolioProjects.dbo.FIFA21RAWDATA
+SET IR = REPLACE(IR, N'★', '')
+
+ALTER TABLE PortfolioProjects.dbo.FIFA21RAWDATA
+ALTER COLUMN IR INT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
